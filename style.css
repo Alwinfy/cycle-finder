@@ -1,0 +1,38 @@
+summary { display: list-item; }
+body { background-color: #eee; }
+
+main {
+	background-color: white;
+	min-height: 100vh;
+	padding-top: 3em;
+}
+
+input.lhs-input {
+	width: 7em;
+	text-align: right;
+}
+input.rhs-input {
+	width: 5em;
+	min-width: 2em;
+}
+
+button {
+	vertical-align: middle;
+}
+
+.row-container {
+	display: inline-flex;
+	flex-flow: row nowrap;
+	overflow-x: scroll;
+	max-width: 60%;
+}
+
+.ok-report { color: green; }
+.bad-report { color: red; }
+
+/*
+.sink-container {
+	display: flex;
+	flex-flow: row nowrap;
+}
+*/
