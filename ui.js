@@ -106,9 +106,12 @@ class GraphSink extends EventTarget {
         console.log(this.rhsRoot);
         this.add.value = "";
         for (const st of state) {
-            if (typeof st !== "string" || !st.length)
+            if (typeof st !== "string")
                 continue;
-            const sink = this.addRhs(st);
+            const str = st.trim();
+            if (!str.length)
+                continue;
+            const sink = this.addRhs(str);
         }
     }
     get state() {
@@ -201,9 +204,10 @@ class GraphInput extends EventTarget {
             const lhs = st.lhs;
             if (typeof lhs !== "string")
                 continue;
-            if (!lhs.length)
+            const str = lhs.trim();
+            if (!str.length)
                 continue;
-            const sink = this.addSink(lhs);
+            const sink = this.addSink(str);
             sink.state = st.rhs;
         }
     }
