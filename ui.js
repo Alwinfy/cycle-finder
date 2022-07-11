@@ -1,7 +1,7 @@
 "use strict";
 const propChange = (input, onChange) => {
     input.addEventListener("change", ev => {
-        const val = input.value;
+        const val = input.value.trim();
         if (val.length) {
             onChange(val, ev);
         }
@@ -17,7 +17,7 @@ const hookRemove = (base, array) => {
 };
 const hookEmpty = (base, cb) => {
     base.addEventListener("change", () => {
-        const val = base.value;
+        const val = base.value.trim();
         if (!val.length) {
             cb();
         }

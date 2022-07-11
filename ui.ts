@@ -1,6 +1,6 @@
 const propChange = (input: HTMLInputElement, onChange: (text: string, ev: Event) => void) => {
 	input.addEventListener("change", ev => {
-		const val = input.value;
+		const val = input.value.trim();
 		if (val.length) {
 			onChange(val, ev);
 		}
@@ -17,8 +17,8 @@ const hookRemove = <T extends EventTarget>(base: T, array: T[]) => {
 };
 const hookEmpty = (base: HTMLInputElement, cb: () => void) => {
 	base.addEventListener("change", () => {
-		const val = base.value;
-		if (!val.length) {	
+		const val = base.value.trim();
+		if (!val.length) {
 			cb();
 		}
 	});
