@@ -30,15 +30,17 @@ class GraphSrc extends EventTarget {
     constructor(root, rhsVal) {
         super();
         this.root = root;
-        this.root.value = rhsVal;
-        hookEmpty(this.root, () => this.delete());
+        this.input = builder("input").clazz("form-control", "rhs-input", "filled-rhs-input").onto(root);
+        builder(root).text(", ");
+        this.input.value = rhsVal;
+        hookEmpty(this.input, () => this.delete());
         propagateChange(this.root, this);
     }
     set state(state) {
-        this.root.value = state;
+        this.input.value = state;
     }
     get state() {
-        return this.root.value;
+        return this.input.value.trim();
     }
     delete() {
         this.dispatchEvent(new Event("remove"));
@@ -83,8 +85,7 @@ class GraphSink extends EventTarget {
         });
     }
     addRhs(rhsVal) {
-        const base = builder("input").clazz("form-control", "rhs-input", "filled-rhs-input").onto(this.rhsRoot);
-        const rhs = new GraphSrc(base, rhsVal);
+        const rhs = new GraphSrc(this.rhsRoot, rhsVal);
         hookRemove(rhs, this.rhs);
         propagateChange(rhs, this);
         this.rhs.push(rhs);
@@ -106,7 +107,7 @@ class GraphSink extends EventTarget {
         }
     }
     get state() {
-        return { lhs: this.lhs.value, rhs: this.rhs.map(x => x.state) };
+        return { lhs: this.lhs.value.trim(), rhs: this.rhs.map(x => x.state) };
     }
     delete() {
         this.dispatchEvent(new Event("remove"));
@@ -213,7 +214,6 @@ class GraphOutput {
     }
     update(input) {
         const graph = toGraph(input);
-        console.log(graph);
         const [success, report] = analyzeGraph(graph);
         while (this.body.firstChild) {
             this.body.removeChild(this.body.firstChild);

@@ -25,20 +25,18 @@ input.rhs-input {
 	width: 5em;
 	min-width: 2em;
 }
-input.filled-rhs-input::after {
-	content: ", ";
-}
 
-.row-container {
-	display: inline-flex;
-	flex-flow: row nowrap;
-	overflow-x: scroll;
-}
+
 
 .ok-report { color: green; }
 .bad-report { color: red; }
 
 /*
+.row-container {
+	display: inline-flex;
+	flex-flow: row nowrap;
+	overflow-x: scroll;
+}
 .sink-container {
 	display: flex;
 	flex-flow: row nowrap;

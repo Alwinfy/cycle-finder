@@ -51,7 +51,6 @@ const analyzeGraph = (graph) => {
             }
         }
     } while (!done);
-    console.log("wgraph", wgraph);
     if (!wgraph.cover.size) {
         const axioms = Array.from(graph.cover).filter(ax => isLeaf(graph, ax));
         return [true, [axioms, chain]];
