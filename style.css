@@ -7,6 +7,16 @@ main {
 	padding-top: 3em;
 }
 
+input.form-control {
+	margin: 0.5em 0.1em;
+	display: revert;
+	width: revert;
+}
+
+button.glyphicon {
+	top: -1px;
+}
+
 input.lhs-input {
 	width: 7em;
 	text-align: right;
@@ -15,16 +25,14 @@ input.rhs-input {
 	width: 5em;
 	min-width: 2em;
 }
-
-button {
-	vertical-align: middle;
+input.filled-rhs-input::after {
+	content: ", ";
 }
 
 .row-container {
 	display: inline-flex;
 	flex-flow: row nowrap;
 	overflow-x: scroll;
-	max-width: 60%;
 }
 
 .ok-report { color: green; }

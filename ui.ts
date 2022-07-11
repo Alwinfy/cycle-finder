@@ -63,14 +63,14 @@ class GraphSink extends EventTarget {
 	constructor(root: HTMLElement, lhsVal: string) {
 		super();
 		this.root = root;
-		this.lhs = builder("input").clazz("lhs-input").onto(root) as HTMLInputElement;
+		this.lhs = builder("input").clazz("lhs-input", "form-control").onto(root) as HTMLInputElement;
 		hookEmpty(this.lhs, () => this.delete());
 		propagateChange(this.lhs, this);
 		this.lhs.value = lhsVal;
 		builder(root).text(" depends on ");
 		this.rhsRoot = builder("span").clazz("row-container").onto(root);
 		this.rhs = [];
-		this.add = builder("input").clazz("rhs-input", "new-rhs-input").onto(root) as HTMLInputElement;
+		this.add = builder("input").clazz("rhs-input", "new-rhs-input", "form-control").onto(root) as HTMLInputElement;
 		propChange(this.add, rhsVal => this.addRhs(rhsVal));
 		this.add.addEventListener("beforeinput", e => {
 			const keys = e.data;
@@ -83,12 +83,19 @@ class GraphSink extends EventTarget {
 				e.preventDefault();
 			}
 		});
-		this.remove = builder("button").clazz("glyphicon", "glyphicon-remove").onto(root) as HTMLButtonElement;
-		this.remove.addEventListener("click", () => this.delete());
+		builder(root).text(" ");
+		this.remove = builder("button").clazz("btn", "btn-default", "glyphicon", "glyphicon-trash").onto(root) as HTMLButtonElement;
+		this.remove.addEventListener("click", () => {
+			if (this.rhs.length) {
+				this.state = [];
+			} else {
+				this.delete();
+			}
+		});
 	}
 
 	addRhs(rhsVal: string) {
-		const base = builder("input").clazz("rhs-input", "filled-rhs-input").onto(this.rhsRoot) as HTMLInputElement;
+		const base = builder("input").clazz("form-control", "rhs-input", "filled-rhs-input").onto(this.rhsRoot) as HTMLInputElement;
 		const rhs = new GraphSrc(base, rhsVal);
 		hookRemove(rhs, this.rhs);
 		propagateChange(rhs, this);
@@ -128,13 +135,17 @@ class GraphInput extends EventTarget {
 	rowRoot: HTMLElement;
 	rows: GraphSink[];
 	add: HTMLInputElement;
+	clear: HTMLButtonElement;
+	copy: HTMLButtonElement;
+	paste: HTMLButtonElement;
+	pasteHelper: HTMLInputElement;
 
 	constructor(root: HTMLElement) {
 		super();
 		this.root = root;
 		//this.sort = builder("button").clazz("glyphicon", "glyphicon-sort-by-attributes").onto(root) as HTMLButtonElement;
 		this.rowRoot = builder("div").clazz("graph-rows").onto(root);
-		this.add = builder("input").clazz("lhs-input").attr("placeholder", "Theorem").onto(root) as HTMLInputElement;
+		this.add = builder("input").clazz("lhs-input", "form-control").attr("placeholder", "Theorem").onto(root) as HTMLInputElement;
 		this.add.addEventListener("beforeinput", e => {
 			const keys = e.data;
 			if (!keys) return;
@@ -148,7 +159,39 @@ class GraphInput extends EventTarget {
 			}
 		});
 		propChange(this.add, addVal => this.addSink(addVal));
+		builder(root).text(" ");
+		this.clear = builder("button").clazz("btn", "btn-default", "glyphicon", "glyphicon-remove").onto(root) as HTMLButtonElement;
+		this.clear.addEventListener("click", () => {
+			if (confirm("This will clear everything! Are you sure?")) {
+				this.state = [];
+			}
+		});
 		this.rows = [];
+		builder("br").onto(root);
+		builder("br").onto(root);
+
+		this.pasteHelper = builder("input").clazz("form-control").attr("placeholder", "Save/load a theorem list").onto(root) as HTMLInputElement;
+		builder(root).text(" ");
+		this.copy = builder("button").clazz("btn", "btn-default", "glyphicon", "glyphicon-save").onto(root) as HTMLButtonElement;
+		this.copy.addEventListener("click", ev => {
+			const state = JSON.stringify(this.state);
+			this.pasteHelper.value = state;
+			navigator.clipboard.writeText(state);
+		});
+		builder(root).text(" ");
+		this.paste = builder("button").clazz("btn", "btn-default", "glyphicon", "glyphicon-open").onto(root) as HTMLButtonElement;
+		this.paste.addEventListener("click", ev => {
+			const str = this.pasteHelper.value;
+			if (!str.length) return;
+			try {
+				const stored = JSON.parse(str);
+				if (stored) {
+					this.state = stored;
+				}
+			} catch (e) {
+				console.warn(e);
+			}
+		});
 	}
 
 	addSink(addVal: string) {
@@ -192,7 +235,7 @@ class GraphOutput {
 	constructor(root: HTMLElement) {
 		this.root = root;
 		this.header = builder("h2").clazz("report-header").onto(root);
-		this.body = builder("ul").clazz("report-body").onto(root);
+		this.body = builder("div").clazz("report-body").onto(root);
 	}
 	update(input: GraphInput) {
 		const graph = toGraph(input);
@@ -201,21 +244,27 @@ class GraphOutput {
 		while (this.body.firstChild) {
 			this.body.removeChild(this.body.firstChild);
 		}
+		const plur = (x: number, s: string) => x === 1 ? s : (s + "s");
 		if (success) {
 			this.root.classList.remove("bad-report");
 			this.root.classList.add("ok-report");
 			this.header.innerText = "NO CYCLES FOUND";
 			const [axioms, toposort] = report;
 			const axSet = new Set(axioms);
+			const implicitAxia = new Set(axioms.filter(x => !graph.graph.has(x)));
 			const thms = toposort.filter(x => !axSet.has(x));
 			if (axioms.length) {
-				builder("li").text(`${thms.length} proof(s), ${axioms.length} axiom(s).`).onto(this.body);
+				builder("p").text(`${thms.length} ${plur(thms.length, "proof")}, ${axioms.length} ${plur(axioms.length, "axiom")} (${implicitAxia.size} implicit).`).onto(this.body);
 				const axBuild = builder("ul");
 				for (const axiom of axioms) {
-					axBuild.child(builder("li").text(axiom));
+					if (implicitAxia.has(axiom)) {
+						axBuild.child(builder("li").child(builder("u").text(axiom)));
+					} else {
+						axBuild.child(builder("li").text(axiom));
+					}
 				}
 				builder("details").attr("open", "true")
-					.child(builder("summary").text("List of axioms:"))
+					.child(builder("summary").text("List of axioms (").child(builder("u").text("underlined")).text(" are implicitly declared):"))
 					.child(axBuild).onto(this.body);
 			}
 			if (thms.length) {
@@ -233,7 +282,7 @@ class GraphOutput {
 			this.root.classList.remove("ok-report");
 			this.root.classList.add("bad-report");
 			this.header.innerText = "CYCLES DETECTED";
-			builder("li").text(`${report.length} cycle(s) detected:`).onto(this.body);
+			builder("p").text(`${report.length} ${plur(report.length, "cycle")} detected:`).onto(this.body);
 			const cycles = builder("ul");
 			for (const cycle of report) {
 				cycles.child(builder("li").text(cycle.join(" \u2192 ")));
@@ -252,7 +301,7 @@ class QueueJoin {
 		this.timeout = null;
 	}
 	set() {
-		this.timeout = setTimeout(() => this.trigger());
+		this.timeout = setTimeout(() => this.trigger(), 50);
 	}
 	trigger() {
 		this.clear();
