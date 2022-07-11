@@ -50,7 +50,8 @@ class GraphSrc extends EventTarget {
 
 	delete() {
 		this.dispatchEvent(new Event("remove"));
-		this.root.remove();
+		this.input.nextSibling!.remove();
+		this.input.remove();
 		this.dispatchEvent(new Event("change"));
 	}
 }
@@ -104,6 +105,8 @@ class GraphSink extends EventTarget {
 		this.rhs.push(rhs);
 		this.add.value = "";
 		this.dispatchEvent(new Event("change"));
+		console.log("after add", this.rhs);
+		console.log(this.rhsRoot);
 		return rhs;
 	}
 
@@ -113,6 +116,8 @@ class GraphSink extends EventTarget {
 		for (const row of Array.from(this.rhs)) {
 			row.delete();
 		}
+		console.log(this.rhs);
+		console.log(this.rhsRoot);
 		this.add.value = "";
 
 		for (const st of state) {
@@ -254,8 +259,8 @@ class GraphOutput {
 			const axSet = new Set(axioms);
 			const implicitAxia = new Set(axioms.filter(x => !graph.graph.has(x)));
 			const thms = toposort.filter(x => !axSet.has(x));
+			builder("p").text(`${thms.length} ${plur(thms.length, "proof")}, ${axioms.length} ${plur(axioms.length, "axiom")} (${implicitAxia.size} implicit).`).onto(this.body);
 			if (axioms.length) {
-				builder("p").text(`${thms.length} ${plur(thms.length, "proof")}, ${axioms.length} ${plur(axioms.length, "axiom")} (${implicitAxia.size} implicit).`).onto(this.body);
 				const axBuild = builder("ul");
 				for (const axiom of axioms) {
 					if (implicitAxia.has(axiom)) {
@@ -302,7 +307,7 @@ class QueueJoin {
 		this.timeout = null;
 	}
 	set() {
-		this.timeout = setTimeout(() => this.trigger(), 50);
+		this.timeout = setTimeout(() => this.trigger(), 100);
 	}
 	trigger() {
 		this.clear();
@@ -327,6 +332,7 @@ class Applet {
 		this.output = new GraphOutput(builder("div").clazz("output-root").onto(output));
 		this.qj = new QueueJoin(() => this.writeState());
 		this.input.addEventListener("change", () => this.qj.set());
+		this.output.update(this.input);
 	}
 
 	writeState() {
